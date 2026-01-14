@@ -1,4 +1,10 @@
 // ===================================
+// Mobile Navigation Toggle
+// ===================================
+const hamburger = document.querySelector('.hamburger');
+const navLinks = document.querySelector('.nav-links');
+
+// ===================================
 // Smooth Scrolling Navigation
 // ===================================
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -23,12 +29,6 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
-// ===================================
-// Mobile Navigation Toggle
-// ===================================
-const hamburger = document.querySelector('.hamburger');
-const navLinks = document.querySelector('.nav-links');
-
 hamburger.addEventListener('click', () => {
     navLinks.classList.toggle('active');
     hamburger.classList.toggle('active');
@@ -43,22 +43,66 @@ document.addEventListener('click', (e) => {
 });
 
 // ===================================
-// Navbar Scroll Effect
+// Consolidated Scroll Handler
 // ===================================
 const navbar = document.querySelector('.navbar');
-let lastScroll = 0;
+const sections = document.querySelectorAll('section[id]');
+let scrollBtn;
 
-window.addEventListener('scroll', () => {
+// Throttle function to improve performance
+function throttle(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Consolidated scroll handler
+const handleScroll = throttle(() => {
     const currentScroll = window.pageYOffset;
 
+    // Navbar scroll effect
     if (currentScroll > 100) {
         navbar.style.boxShadow = '0 4px 12px rgba(139, 92, 246, 0.15)';
     } else {
         navbar.style.boxShadow = '0 4px 6px rgba(139, 92, 246, 0.1)';
     }
 
-    lastScroll = currentScroll;
-});
+    // Active navigation link highlighting
+    let current = '';
+    const navHeight = navbar.offsetHeight;
+
+    sections.forEach(section => {
+        const sectionTop = section.offsetTop - navHeight - 100;
+        const sectionHeight = section.offsetHeight;
+        if (currentScroll >= sectionTop && currentScroll < sectionTop + sectionHeight) {
+            current = section.getAttribute('id');
+        }
+    });
+
+    document.querySelectorAll('.nav-links a').forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === `#${current}`) {
+            link.classList.add('active');
+        }
+    });
+
+    // Scroll to top button visibility
+    if (scrollBtn) {
+        if (currentScroll > 500) {
+            scrollBtn.style.display = 'flex';
+        } else {
+            scrollBtn.style.display = 'none';
+        }
+    }
+}, 100);
+
+window.addEventListener('scroll', handleScroll);
 
 // ===================================
 // Skill Progress Animation
@@ -151,6 +195,32 @@ contactForm.addEventListener('submit', (e) => {
 // ===================================
 // Notification System
 // ===================================
+// Add notification styles to the document head once
+const notificationStyles = document.createElement('style');
+notificationStyles.textContent = `
+    @keyframes slideIn {
+        from {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(notificationStyles);
+
 function showNotification(message, type) {
     // Remove existing notification if any
     const existingNotification = document.querySelector('.notification');
@@ -178,32 +248,6 @@ function showNotification(message, type) {
         animation: slideIn 0.3s ease;
     `;
 
-    // Add animation
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes slideIn {
-            from {
-                transform: translateX(400px);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-        @keyframes slideOut {
-            from {
-                transform: translateX(0);
-                opacity: 1;
-            }
-            to {
-                transform: translateX(400px);
-                opacity: 0;
-            }
-        }
-    `;
-    document.head.appendChild(style);
-
     // Add to page
     document.body.appendChild(notification);
 
@@ -212,41 +256,19 @@ function showNotification(message, type) {
         notification.style.animation = 'slideOut 0.3s ease';
         setTimeout(() => {
             notification.remove();
-            style.remove();
         }, 300);
     }, 5000);
 }
 
 // ===================================
-// Active Navigation Link Highlighting
+// Active Navigation Link Highlighting (handled in consolidated scroll handler above)
 // ===================================
-const sections = document.querySelectorAll('section[id]');
-
-window.addEventListener('scroll', () => {
-    let current = '';
-    const navHeight = navbar.offsetHeight;
-
-    sections.forEach(section => {
-        const sectionTop = section.offsetTop - navHeight - 100;
-        const sectionHeight = section.offsetHeight;
-        if (window.pageYOffset >= sectionTop && window.pageYOffset < sectionTop + sectionHeight) {
-            current = section.getAttribute('id');
-        }
-    });
-
-    document.querySelectorAll('.nav-links a').forEach(link => {
-        link.classList.remove('active');
-        if (link.getAttribute('href') === `#${current}`) {
-            link.classList.add('active');
-        }
-    });
-});
 
 // ===================================
 // Scroll to Top Button (Optional Enhancement)
 // ===================================
 function createScrollToTopButton() {
-    const scrollBtn = document.createElement('button');
+    scrollBtn = document.createElement('button');
     scrollBtn.innerHTML = '<i class="fas fa-arrow-up"></i>';
     scrollBtn.className = 'scroll-to-top';
     scrollBtn.style.cssText = `
@@ -256,7 +278,7 @@ function createScrollToTopButton() {
         width: 50px;
         height: 50px;
         border-radius: 50%;
-        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        background: linear-gradient(135deg, #8B5CF6, #A78BFA);
         color: white;
         border: none;
         cursor: pointer;
@@ -277,15 +299,6 @@ function createScrollToTopButton() {
     });
 
     document.body.appendChild(scrollBtn);
-
-    // Show/hide button based on scroll position
-    window.addEventListener('scroll', () => {
-        if (window.pageYOffset > 500) {
-            scrollBtn.style.display = 'flex';
-        } else {
-            scrollBtn.style.display = 'none';
-        }
-    });
 
     scrollBtn.addEventListener('mouseenter', () => {
         scrollBtn.style.transform = 'translateY(-5px)';
